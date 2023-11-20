@@ -77,6 +77,15 @@ int userTurn() {
     return input - 1;
 }
 
+int userTurn(string s) {
+
+    int input;
+
+    cin >> input;
+
+    return input - 1;
+}
+
 //checks if position is valid (does [row] [col] exist on the grid?)
 bool isPosValid(int row, int col) {
 
@@ -125,12 +134,12 @@ boolInt checkDirection(int row, int col, char c, int direction) {
             break;
         
         case 2:     //to the right
-            row1 = row - 1;
-            col1 = col;
+            row1 = row;
+            col1 = col + 1;
             break;
 
         case 3:     //down and to the right
-            row1 = row;
+            row1 = row + 1;
             col1 = col + 1;
             break;
 
@@ -211,7 +220,7 @@ bool gameWon(char c, int row, int col) {
 
         count += innaRow(row, col, c, reverseDirection(dirs)); //check in opposite direction (if placed piece is in middle)
        
-            cout << "count: " << count << endl;
+//            cout << "count: " << count << "in dir: " << dirs << endl;
 
         if (count >= 5) { //self is counted twice
             return true;
@@ -222,6 +231,20 @@ bool gameWon(char c, int row, int col) {
 
 }
 
+bool isColumnFull(int col) {
+
+    for (int i = 0; i <= 6; i++) {
+
+        if (board[i][col] == ' ') {
+            return false;
+        }
+
+    }
+
+    return true;
+
+}
+
 /*  Given a character to place, and a starting row and column, 
     "gravity" will place the piece in the lowest available open position
     uses recursion to search the spot below current slot to check if
@@ -229,7 +252,13 @@ bool gameWon(char c, int row, int col) {
         b) is it open or taken? */
 void determinePos(char c, int row, int col) {
 
-    if (row == 5) {
+    if(row == 0 && isColumnFull(col)) {
+        cout << "That column is full, pick another one: " << endl;
+        determinePos(c, 0, userTurn("full"));
+        return;
+    }
+
+    if (row == 5) { //base case, if piece is put into empty column
 
         board[row][col] = c;
         if (gameWon(c, row, col)) {
@@ -247,7 +276,15 @@ void determinePos(char c, int row, int col) {
 
 }
 
-//START OF MINIMAX ALGORITHM/DECISION MAKING
+/* START OF MINIMAX ALGORITHM/DECISION MAKING 
+
+    1. Are there moves to make?
+    2. To find the best move, we use the minimax algorithm to weigh our options, and to choose the best one
+    3. How do we measure how "good" each poossible move is?
+
+
+
+*/
 
 int main()
 {

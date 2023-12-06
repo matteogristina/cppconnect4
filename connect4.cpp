@@ -6,6 +6,7 @@ using namespace std;
 
 
 /*  universal variables */
+int movecount = 0;
 bool isGameOver = false;
 char board [6][7] = { // 0,0 -->       -->         -->   0,6
          /* 0,0 */      {' ', ' ', ' ', ' ', ' ', ' ', ' '},
@@ -27,58 +28,23 @@ char boardWin [6][7] = { // 0,0 -->       -->         -->   0,6
 
 const float numerator = 10.0;
 
-/*  datatype made specifically for checkDirection method
-    dir - direction relative to source tile that was checked for a matching char
-    row - the row of the specific tile that was checked
-    col - the column of the specific tile that was checked 
-    b   - bool that represents if the function found a match */
-struct boolInt {
-    int dir;
-    int row;    //row that was checked
-    int col;    //col that was checked
-    bool b;
-};
-
 /*  FUNCTIONS */
     
 /*  Modified sigmoid function that determines how far the bot will loook ahead. 
     Will output INTEGER VALUE between 0 and 10 (inclusive) */
 int sigmoid(int x) {
 
-    float denom = 1.0 + exp((-0.5) * (x - 10));
+    float denom = 1.0 + exp((-0.3) * (x - 10));
 
     return round(numerator/denom);
 
 }
 
-
-
-
 /*  clears console so that I don't spam hundreds of messages and new boards
     source: https://stackoverflow.com/a/32008479 */
 void clearscreen() {
-    cout << "\033[2J\033[1;1H";
-}
-
-/*  prints out initial grid when program is started */
-void printgrid() {
-
-    clearscreen();
-
-    cout << "__ 1 ___ 2 ___ 3 ___ 4 ___ 5 ___ 6 ___ 7 __" << endl;
-    cout << "|     |     |     |     |     |     |     |" << endl;
-    cout << "|_____|_____|_____|_____|_____|_____|_____|" << endl;
-    cout << "|     |     |     |     |     |     |     |" << endl;
-    cout << "|_____|_____|_____|_____|_____|_____|_____|" << endl;
-    cout << "|     |     |     |     |     |     |     |" << endl;
-    cout << "|_____|_____|_____|_____|_____|_____|_____|" << endl;
-    cout << "|     |     |     |     |     |     |     |" << endl;
-    cout << "|_____|_____|_____|_____|_____|_____|_____|" << endl;
-    cout << "|     |     |     |     |     |     |     |" << endl;
-    cout << "|_____|_____|_____|_____|_____|_____|_____|" << endl;
-    cout << "|     |     |     |     |     |     |     |" << endl;
-    cout << "|_____|_____|_____|_____|_____|_____|_____|" << endl;
-
+//    cout << "\033[2J\033[1;1H";
+    system("cls");
 }
 
 /*  overloaded printgrid method, takes universal array as input 
@@ -128,6 +94,8 @@ int userTurn() {
 
     cin >> input;
 
+    movecount++;
+
     return input - 1;
 }
 /*  Overloaded userTurn method to not print out a new prompt line */
@@ -138,17 +106,6 @@ int userTurn(string s) {
     cin >> input;
 
     return input - 1;
-}
-
-/*  checks if position is valid (does [row] [col] exist on the grid?) */
-bool isPosValid(int row, int col) {
-
-    if ((row >= 0 && row < 6) && (col >= 0 && col < 7)) {
-        return true;
-    } else {
-        return false;
-    }
-
 }
 
 /*  returns true if column col is full */
@@ -163,137 +120,6 @@ bool isColumnFull(int col) {
     }
 
     return true;
-
-}
-
-/* check adjacent tiles in certain directions (POI = point of interest)
-                 7    0    1
-                   ↖  ↑  ↗
-                6 <- POI ->  2
-                   ↙  ↓  ↘
-                  5   4    3
-
-REMEMBER, top left is (row,col) = (0,0), to move right, col + 1, to move down, row + 1
-
-from tile at [ROW] and [COL], see if character [c] is in [direction] direction
-returns true, a direction int, and the row and col of the value checked if
-the tile in that direction/at that index matches with the POI
-
-returns false, a direction, and the row/col checked if the tile in that direction
-exists, but does not match the POI
-
-returns false with direction -1, and row, col -1, -1 if invalid. 
-returns this case if the tile in that direction DOES NOT EXIST
-
-
-This function is meant to be used to check for game wins AS PIECES ARE BEING PLAYED.
-Unfortunately that does not mesh well with how the minimax function operates.
-
-Maybe just use this for checking if the user won?
-*/
-boolInt checkDirection(int row, int col, char c, int direction) {
-
-    int row1, col1 = 0;
-
-    switch(direction) {
-        case 0:     //directly up
-            row1 = row - 1;
-            col1 = col;
-            break;
-        
-        case 1:     //up and to the right
-            row1 = row - 1;
-            col1 = col + 1;
-            break;
-        
-        case 2:     //to the right
-            row1 = row;
-            col1 = col + 1;
-            break;
-
-        case 3:     //down and to the right
-            row1 = row + 1;
-            col1 = col + 1;
-            break;
-
-        case 4:     //down
-            row1 = row + 1;
-            col1 = col;
-            break;
-
-        case 5:     //down and to the left
-            row1 = row + 1;
-            col1 = col - 1;
-            break;
-
-        case 6:     //to the left
-            row1 = row;
-            col1 = col - 1;
-            break;
-
-        case 7:     //up and to the left
-            row1 = row - 1;
-            col1 = col - 1;
-            break;
-    }
-
-    if(isPosValid(row1, col1)) {
-        if (c == board[row1][col1]) {
-            boolInt result = {direction, row1, col1, true};
-            return result;
-        } else {
-            boolInt result = {direction, row1, col1, false};
-            return result;
-        }
-    } else {
-        boolInt result = {-1, -1, -1, false};
-        return result;
-    }
-
-}
-
-/*  reverses the direction passed as parameter (180 degree turn) */
-int reverseDirection(int dir) {
-    if (dir < 4) {
-        return dir + 4;
-    } else {
-        return dir - 4;
-    }
-}
-/*  searches in [direction]'s direction, and finds how many consecutive c there are */
-int innaRow(int row, int col, char c, int direction) {
-    int solution = 1;  
-    boolInt check = checkDirection(row, col, c, direction);
-
-    if (check.b) {
-        solution++;
-        solution += innaRow(check.row, check.col, c, direction);
-        return solution;
-    } else {
-        return 0;
-    }
-}
-
-/*  return if the game has been won by putting char c in position row and col
-
-    start checking all directions (excluding up, for obv reasons)
-        once one direction is fully exhausted, check the polar opposite direction
-        to see if there is a possibility of more consecutive pieces */
-bool gameWon(char c, int row, int col) {
-
-    for (int dirs = 0; dirs < 8; dirs++) {
-
-        int count = 0;
-        count = count + innaRow(row, col, c, dirs); //check in initial direction
-
-        count += innaRow(row, col, c, reverseDirection(dirs)); //check in opposite direction (if placed piece is in middle)
-
-        if (count >= 5) { //self is counted twice
-            return true;
-        }
-    }
-
-    return false;
 
 }
 
@@ -327,7 +153,11 @@ void determinePos(char arr[6][7], char c, int row, int col) {
 /*  start of minimax stuff */
 
 /*  Iterates through the whole board, at first sight of ' ' (space/empty),
-    return true; there are still moves that can be played */
+    return true; there are still moves that can be played 
+    
+    Used in minimax function
+
+    */
 bool isMovesLeft(char arr[6][7]) {
 
     for (int i = 0; i < 5; i++) {
@@ -438,7 +268,7 @@ int eval(char arr[6][7], bool print) {
 
     }
 
-    //check for diagonal (top left to bottom right)
+    //check for diagonal (top left to bottom right)  ↘ 
     for (int i = 2; i > -1; i--) {
 
         for (int j = 0; j < 4; j++) {
@@ -456,13 +286,13 @@ int eval(char arr[6][7], bool print) {
                 if (k == 3) {
                     if (match == 'x') {
                         if (print) {
-                            cout << "x diag ↘ win " << i << ", " << j << endl;
+                            cout << "x diagonal win " << i << ", " << j << endl;
                         }
 
                         return 10;
                     } else if (match == 'o') {
                         if (print) {
-                            cout << "o diag ↘ win " << i << ", " << j << endl;
+                            cout << "o diagonal win " << i << ", " << j << endl;
                         }
 
                         return -10;
@@ -477,8 +307,8 @@ int eval(char arr[6][7], bool print) {
 
     }
 
-    //check for diagonal (top right to bottom left)
-    for (int i = 2; i > -1; i--) {
+    //check for diagonal (top right to bottom left)  ↙
+    for (int i = 2; i > -1; i--) { 
 
         for (int j = 3; j < 7; j++) {
 
@@ -495,13 +325,13 @@ int eval(char arr[6][7], bool print) {
                 if (k == 3) {
                     if (match == 'x') {
                         if (print) {
-                            cout << "x diag ↙ win " << i << ", " << j << endl;
+                            cout << "x diagonal win " << i << ", " << j << endl;
                         }
 
                         return 10;
                     } else if (match == 'o') {
                         if (print) {
-                            cout << "o diag ↙ win " << i << ", " << j << endl;
+                            cout << "o diagonal win " << i << ", " << j << endl;
                         }
 
                         return -10;
@@ -518,6 +348,11 @@ int eval(char arr[6][7], bool print) {
 
     return 0;
 }
+
+
+/*
+    Creates final board with all NON WINNING pieces cleared, utilizes boardWin array instead of board
+*/
 
 int finaleval(char arr[6][7], bool print) {
 
@@ -643,7 +478,7 @@ int finaleval(char arr[6][7], bool print) {
                 if (k == 3) {
                     if (match == 'x') {
                         if (print) {
-                            cout << "x diag ↘ win " << i << ", " << j << endl;
+                            cout << "x diagonal win " << i << ", " << j << endl; // this direction ↘
                         }
 
                         boardWin[i + 3][j + 3] = 'x';
@@ -654,7 +489,7 @@ int finaleval(char arr[6][7], bool print) {
                         return 10;
                     } else if (match == 'o') {
                         if (print) {
-                            cout << "o diag ↘ win " << i << ", " << j << endl;
+                            cout << "o diagonal win " << i << ", " << j << endl;
                         }
 
                         boardWin[i + 3][j + 3] = 'o';
@@ -692,7 +527,7 @@ int finaleval(char arr[6][7], bool print) {
                 if (k == 3) {
                     if (match == 'x') {
                         if (print) {
-                            cout << "x diag ↙ win " << i << ", " << j << endl;
+                            cout << "x diagonal win " << i << ", " << j << endl;  // this direction ↙
                         }
 
                         boardWin[i + 3][j - 3] = 'x';
@@ -703,7 +538,7 @@ int finaleval(char arr[6][7], bool print) {
                         return 10;
                     } else if (match == 'o') {
                         if (print) {
-                            cout << "o diag ↙ win " << i << ", " << j << endl;
+                            cout << "o diagonal win " << i << ", " << j << endl;
                         }
 
                         boardWin[i + 3][j - 3] = 'o';
@@ -726,26 +561,6 @@ int finaleval(char arr[6][7], bool print) {
     return 0;
 }
 
-/*  given current game state (array of played pieces), and [ROW],[COL] of last piece played, check if it won.
-    If that piece won, return a score depending on the piece.
-    
-    Initial version if eval, just makes use of gameWon function. Does not work with minimax function */
-int eval(char arr[6][7], int row, int col) {
-
-    char piece = arr[row][col];
-    if (gameWon(piece, row, col)) {
-
-        if (piece == 'x') {
-            return 10;
-        } else if (piece == 'o'){
-            return -10;
-        }
-
-    }
-
-    return 0;
-
-}
 
 
 /*  minimax function:
@@ -764,13 +579,10 @@ int eval(char arr[6][7], int row, int col) {
                     take far too long, so I shortened the lookahead of the "bot" */
 int minimax(char arr[6][7], int depth, bool isMax, int alpha, int beta) {
 
-//sigmoid(numberPieces())
 
-    if (depth > 3) {
-
-        return 0;
-
-    }
+        if (depth > sigmoid(movecount)) {
+            return 0;
+        }
 
     int score = eval(arr, false);          //  evaluate current board
 
@@ -847,14 +659,13 @@ int findBestMove(char arr[6][7]) {
     int solution = -1;  //column of the best move
     int best = -10000;
 
-    int thresh = sigmoid(numberPieces());
 
-    // if (thresh < 4) {
+     if ((sigmoid(numberPieces()) < 2)) {
 
-    //     solution = rand() % 7;
-    //     return solution;
+         solution = rand() % 7;
+         return solution;
 
-    // }
+    }
 
 
     for (int i = 0; i < 7; i++) {
@@ -886,11 +697,10 @@ int findBestMove(char arr[6][7]) {
 
 }
 
-
-
-
 /*TODO:
-find better way to integrate the bot difficulty ramping up, its technically possible to win */
+clean up functions and some possible optimizations 
+add readme in github
+*/
 
 
 int main()
